@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <cstdlib>
 #include <string>
 #include <vector>
@@ -9,11 +10,19 @@ namespace bp = boost::process;
 
 int main()
 {
+  std::ofstream csv("results.csv");
+  if (!csv) {
+    std::cerr << "cannot open file\n";
+    return 1;
+  }
+
+  csv << "threads,time\n";
   std::cout << "threads time\n";
+
   int threads = 2;
-  for (; threads <= 1024; threads*=2)
+  for (; threads <= 1024; threads *= 2)
   {
-    std::vector< double > v;
+    std::vector<double> v;
     for (size_t i = 0; i < 5; ++i)
     {
       bp::ipstream out;
@@ -24,6 +33,10 @@ int main()
       v.push_back(result);
     }
     std::sort(v.begin(), v.end());
-    std::cout << threads << " " << v[2] << "\n";
+
+    double median = v[2];
+
+    std::cout << threads << " " << median << "\n";
+    csv << threads << "," << median << "\n";
   }
 }
