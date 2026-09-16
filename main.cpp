@@ -18,9 +18,18 @@ value_t calc(citer begin, citer end)
   return res;
 }
 
-int main()
+int main(int argc, char** argv)
 {
-  size_t threads = 1;
+  long long threads = 1;
+  if (argc >= 2) {
+    threads = std::stoi(argv[1]);
+  }
+  if (threads <=0)
+  {
+    std::cerr << "bad threads count\n";
+    return 1;
+  }
+
   constexpr size_t size{1'000'000'000};
   double init{0}, total{0};
   value_t sum{0};
@@ -29,22 +38,28 @@ int main()
   size_t nums_on_thread = size / threads;
   {
     zharov::Clicker cl;
-    data_t values(size, 1);
-    for (size_t i = 0; i < threads - 1; ++i)
+    try
     {
-      results.push_back(std::async(std::launch::async, calc, values.cbegin() + i * nums_on_thread,
-        values.cbegin() + (i + 1) * nums_on_thread ));
+      data_t values(size, 1);
+      for (size_t i = 0; i < threads - 1; ++i)
+      {
+        results.push_back(std::async(std::launch::async, calc, values.cbegin() + i * nums_on_thread,
+          values.cbegin() + (i + 1) * nums_on_thread ));
+      }
+      results.push_back(std::async(std::launch::async, calc, values.cbegin() + (threads - 1) * nums_on_thread,
+        values.cend()));
+
+      init = cl.millisec();
+
+      for (size_t i = 0; i < threads; ++i)
+      {
+        sum += results[i].get();
+      }
     }
-    results.push_back(std::async(std::launch::async, calc, values.cbegin() + (threads - 1) * nums_on_thread,
-      values.cend()));
-
-    init = cl.millisec();
-
-    for (size_t i = 0; i < threads; ++i)
+    catch (const std::exception& e)
     {
-      sum += results[i].get();
+      std::cerr << e.what() << "\n";
     }
-
     total = cl.millisec();
   }
   std::cout << total - init << "\n";
