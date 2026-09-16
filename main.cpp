@@ -33,13 +33,13 @@ int main(int argc, char** argv)
   constexpr size_t size{1'000'000'000};
   double init{0}, total{0};
   value_t sum{0};
-  std::vector< std::future< value_t > > results;
-  results.reserve(threads);
-  size_t nums_on_thread = size / threads;
+  try
   {
-    zharov::Clicker cl;
-    try
+    std::vector< std::future< value_t > > results;
+    results.reserve(threads);
+    size_t nums_on_thread = size / threads;
     {
+      zharov::Clicker cl;
       data_t values(size, 1);
       for (size_t i = 0; i < threads - 1; ++i)
       {
@@ -55,12 +55,12 @@ int main(int argc, char** argv)
       {
         sum += results[i].get();
       }
+      total = cl.millisec();
     }
-    catch (const std::exception& e)
-    {
-      std::cerr << e.what() << "\n";
-    }
-    total = cl.millisec();
+  }
+  catch (const std::exception& e)
+  {
+    std::cerr << e.what() << "\n";
   }
   std::cout << total - init << "\n";
 }
